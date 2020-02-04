@@ -17,6 +17,7 @@ package net.tzolov.cv.mtcnn;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,6 +26,7 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
 import org.bytedeco.javacpp.opencv_core;
 import org.bytedeco.javacpp.opencv_imgproc;
@@ -41,7 +43,9 @@ import org.nd4j.linalg.ops.transforms.Transforms;
 import org.nd4j.tensorflow.conversion.graphrunner.GraphRunner;
 import org.tensorflow.framework.ConfigProto;
 
+import java.io.InputStream;
 import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.util.Assert;
 
 import static net.tzolov.cv.mtcnn.MtcnnUtil.CHANNEL_COUNT;
@@ -106,8 +110,8 @@ public class MtcnnService {
 		try {
 			return new GraphRunner(
 					IOUtils.toByteArray(new DefaultResourceLoader().getResource(tensorflowModelUri).getInputStream()),
-					Arrays.asList(inputLabel),
-					ConfigProto.getDefaultInstance());
+					Arrays.asList(inputLabel));
+					// ConfigProto.getDefaultInstance());
 		}
 		catch (IOException e) {
 			throw new IllegalStateException(String.format("Failed to load TF model [%s] and input [%s]:",
@@ -124,12 +128,14 @@ public class MtcnnService {
 	public FaceAnnotation[] faceDetection(String imageUri) throws IOException {
 		// [ 3 x H x W ]
 		INDArray image = this.imageLoader.asMatrix(new DefaultResourceLoader().getResource(imageUri).getInputStream())
-				.get(point(0), all(), all(), all()).dup();
+				.get(point(0), interval(0,3), all(), all()).dup();
+				// .get(point(0), all(), all(), all()).dup();
 		return faceDetection(image);
 	}
 
 	public FaceAnnotation[] faceDetection(BufferedImage bImage) throws IOException {
-		INDArray ndImage3HW = this.imageLoader.asMatrix(bImage).get(point(0), all(), all(), all());
+		INDArray ndImage3HW = this.imageLoader.asMatrix(bImage).get(point(0), interval(0,3), all(), all());
+		// INDArray ndImage3HW = this.imageLoader.asMatrix(bImage).get(point(0), all(), all(), all());
 		return faceDetection(ndImage3HW);
 	}
 
@@ -150,7 +156,6 @@ public class MtcnnService {
 	public FaceAnnotation[] faceDetection(byte[] byteImage) throws IOException {
 		ByteArrayInputStream is = new ByteArrayInputStream(byteImage);
 		BufferedImage bufferedImage = ImageIO.read(is);
-		bufferedImage = MtcnnUtil.to3ByteBGR(bufferedImage);
 		return faceDetection(bufferedImage);
 	}
 
@@ -166,8 +171,7 @@ public class MtcnnService {
 		// Convert result into Bounding Box array
 		INDArray totalBoxes = outputStageResult[0];
 		INDArray points = outputStageResult[1];
-		//if (!totalBoxes.isEmpty() && totalBoxes.size(0) > 1) { // 1.0.0-beta2
-		if (!totalBoxes.isEmpty() && totalBoxes.size(0) > 0) { // 1.0.0-SNAPSHOT
+		if (!totalBoxes.isEmpty() && totalBoxes.size(0) > 1) {
 			points = points.transpose();
 		}
 
@@ -354,7 +358,7 @@ public class MtcnnService {
 	private INDArray refinementStage(INDArray image, INDArray totalBoxes, MtcnnUtil.PadResult padResult) throws IOException {
 
 		// num_boxes = total_boxes.shape[0]
-		int numBoxes = totalBoxes.isEmpty() ? 0 : (int) totalBoxes.shape()[0];
+		int numBoxes = totalBoxes.isEmpty() ? 0 : (int)totalBoxes.shape()[0];
 		// if num_boxes == 0:
 		//   return total_boxes, stage_status
 		if (numBoxes == 0) {
@@ -580,9 +584,59 @@ public class MtcnnService {
 	public INDArray resize(INDArray imageCHW, opencv_core.Size newSizeWH) throws IOException {
 		Assert.isTrue(imageCHW.size(0) == CHANNEL_COUNT, "Input image is expected to have the [3, W, H] dimensions");
 		// Mat expects [C, H, W] dimensions
-		opencv_core.Mat mat = imageLoader.asMat(imageCHW);
-		opencv_imgproc.resize(mat, mat, newSizeWH, 0, 0, opencv_imgproc.CV_INTER_AREA);
+        opencv_core.Mat mat = imageLoader.asMat(imageCHW);
+        opencv_imgproc.resize(mat, mat, newSizeWH, 0, 0, opencv_imgproc.CV_INTER_AREA);
+
+		// Mat mat = imageLoader.asMat(imageCHW);
+		// Imgproc.resize(mat, mat, newSizeWH, 0, 0, Imgproc.CV_INTER_AREA);
 		//[0, W, H, 3]
 		return imageLoader.asMatrix(mat);
 	}
+
+	public static void main(String[] args) throws IOException {
+		//MtcnnService mtcnnService = new MtcnnService(20, 0.709, new double[] { 0.6, 0.7, 0.7 });
+		MtcnnService mtcnnService = new MtcnnService(30, 0.709, new double[] { 0.6, 0.7, 0.7 });
+		String imageUri1 = "file:src/test/resources/VikiMaxiAdi.jpg";
+		String imageUri2 = "file:src/test/resources/Anthony_Hopkins_0002.jpg";
+		String imageUri3 = "file:src/test/resources/pivotal-ipo-nyse.jpg";
+		// String imageUri4 = "file:src/test/resources/bill-cook.jpg";
+		String imageUri4 = "file:trainer_reference.jpg";
+        
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        InputStream imageInputStream = resourceLoader.getResource(imageUri4).getInputStream();
+        BufferedImage inputImage = ImageIO.read(imageInputStream);
+
+		INDArray image = new Java2DNativeImageLoader().asMatrix(inputImage)
+				.get(point(0), all(), all(), all()).dup();
+
+		// FaceAnnotation[] faceAnnotations = mtcnnService.faceDetection(image);
+		FaceAnnotation[] faceAnnotations = mtcnnService.faceDetection(inputImage);
+		System.out.println(faceAnnotations.length);
+		System.out.println("Result: " + new ObjectMapper().writeValueAsString(faceAnnotations));
+
+        BufferedImage annotatedImage = MtcnnUtil.drawFaceAnnotations(inputImage, faceAnnotations);
+        ImageIO.write(annotatedImage, "png", new File("./AnnotatedImage.png"));
+
+
+		int margin = 44; // margin for the crop around the bounding box (height, width) in pixels.
+		int alignedImageSize = 160; // image size for (height, width) in pixels.
+
+		int i = 0;
+		for (FaceAnnotation bbox : faceAnnotations) {
+			INDArray alignedFace = mtcnnService.faceAlignment(image, bbox, margin, alignedImageSize, true);
+			testWriteImage(alignedFace, "" + i++);
+		}
+	}
+
+	private static void testWriteImage(INDArray ndImage, String prefix) {
+		try {
+			BufferedImage image = new Java2DNativeImageLoader().asBufferedImage(ndImage);
+			ImageIO.write(image, "png", new File("target/cropped" + prefix + ".png"));
+			System.out.println(".");
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 }

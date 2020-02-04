@@ -45,7 +45,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 import static org.nd4j.linalg.indexing.NDArrayIndex.all;
-import static org.nd4j.linalg.indexing.NDArrayIndex.indices;
 import static org.nd4j.linalg.indexing.NDArrayIndex.interval;
 import static org.nd4j.linalg.indexing.NDArrayIndex.point;
 
@@ -120,10 +119,8 @@ public class MtcnnUtil {
 			}
 			else {
 				INDArray updateValue = Nd4j.expandDims(b, 1);
-				//edx = edx.put(toUpdateIndex(tmp), updateValue); // // 1.0.0-beta2
-				//ex = ex.put(toUpdateIndex(tmp), Nd4j.zerosLike(tmp).add(w)); // 1.0.0-beta2
-				edx = edx.put(new INDArrayIndex[] { indices(tmp.toLongVector()), all() }, updateValue); // 1.0.0-SNAPSHOT
-				ex = ex.put(new INDArrayIndex[] { indices(tmp.toLongVector()), all() }, Nd4j.zerosLike(tmp.transpose()).add(w)); // 1.0.0-SNAPSHOT
+				edx = edx.put(toUpdateIndex(tmp), updateValue);
+				ex = ex.put(toUpdateIndex(tmp), Nd4j.zerosLike(tmp).add(w));
 			}
 		}
 
@@ -140,10 +137,8 @@ public class MtcnnUtil {
 			}
 			else {
 				INDArray updateValues = Nd4j.expandDims(b, 1);
-				//edy = edy.put(toUpdateIndex(tmp), updateValues); // 1.0.0-beta2
-				//ey = ey.put(toUpdateIndex(tmp), Nd4j.zerosLike(tmp).add(h)); // 1.0.0-beta2
-				edy = edy.put(new INDArrayIndex[] { indices(tmp.toLongVector()), all() }, updateValues); // 1.0.0-SNAPSHOT
-				ey = ey.put(new INDArrayIndex[] { indices(tmp.toLongVector()), all() }, Nd4j.zerosLike(tmp.transpose()).add(h)); //1.0.0-SNAPSHOT
+				edy = edy.put(toUpdateIndex(tmp), updateValues);
+				ey = ey.put(toUpdateIndex(tmp), Nd4j.zerosLike(tmp).add(h));
 				//ey = ey.put(toUpdateIndex(tmp), h); // BUG
 			}
 		}
@@ -161,11 +156,9 @@ public class MtcnnUtil {
 			}
 			else {
 				INDArray updateValues = Nd4j.expandDims(x.get(tmp).rsub(2), 1);
-				//dx.put(toUpdateIndex(tmp), updateValues); // 1.0.0-beta2
-				//x = x.put(toUpdateIndex(tmp), Nd4j.onesLike(tmp)); // 1.0.0-beta2
-				dx.put(new INDArrayIndex[] { indices(tmp.toLongVector()), all() }, updateValues); // 1.0.0-SNAPSHOT
-				x = x.put(new INDArrayIndex[] { indices(tmp.toLongVector()), all() }, Nd4j.onesLike(tmp.transpose())); // 1.0.0-SNAPSHOT
+				dx.put(toUpdateIndex(tmp), updateValues);
 				// x.put(toUpdateIndex(tmp), 1); // BUG
+				x = x.put(toUpdateIndex(tmp), Nd4j.onesLike(tmp));
 			}
 		}
 
@@ -178,16 +171,13 @@ public class MtcnnUtil {
 			INDArray b = y.get(tmp).rsub(2);
 			if (b.isScalar()) {
 				dy.putScalar(tmp.toLongVector(), b.getInt(0));
-				y = y.putScalar(tmp.toLongVector(), 1);
 				//y.put(toUpdateIndex(tmp), 1); // BUG
+				y = y.putScalar(tmp.toLongVector(), 1);
 			}
 			else {
 				INDArray updateValues = Nd4j.expandDims(b, 1);
-				//dy.put(toUpdateIndex(tmp), updateValues); // 1.0.0-beta2
-				//y = y.put(toUpdateIndex(tmp), Nd4j.onesLike(tmp)); // 1.0.0-beta2
-				dy.put(new INDArrayIndex[] { indices(tmp.toLongVector()), all() }, updateValues); // 1.0.0-SNAPSHOT
-				y = y.put(new INDArrayIndex[] { indices(tmp.toLongVector()), all() }, Nd4j.onesLike(tmp.transpose())); // 1.0.0-SNAPSHOT
-
+				dy.put(toUpdateIndex(tmp), updateValues);
+				y = y.put(toUpdateIndex(tmp), Nd4j.onesLike(tmp));
 				//y.put(toUpdateIndex(tmp), 1); // BUG
 			}
 		}
@@ -516,12 +506,11 @@ public class MtcnnUtil {
 	}
 
 	/**
-	 * Converts totalBoxes array into {@link FaceAnnotation } and {@link net.tzolov.cv.mtcnn.FaceAnnotation.Landmark}
-	 * domain json, appropriate for JSON serialization
+	 * Converts totalBoxes array into {@link FaceAnnotation} and {@link Keypoints} domain json, appropriate for JSON serialization
 	 *
 	 * @param totalBoxes input matrix with computed bounding boxes. Each row represents a separate bbox.
 	 * @param points input matrix with computed key points. Each row represents a set of keypoints for a bbox having the same row.
-	 * @return Returns {@link FaceAnnotation} array representing the detected faces and their {@link net.tzolov.cv.mtcnn.FaceAnnotation.Landmark}.
+	 * @return Returns {@link FaceAnnotation} array representing the detected faces and their {@link Keypoints}.
 	 */
 	public static FaceAnnotation[] toFaceAnnotation(INDArray totalBoxes, INDArray points) {
 
@@ -529,8 +518,7 @@ public class MtcnnUtil {
 			return new FaceAnnotation[0];
 		}
 
-		Assert.isTrue(totalBoxes.rows() == points.rows(), "Inconsistent number of boxes ("
-				+ totalBoxes.rows() + ") + and points (" + points.rows() + ")");
+		Assert.isTrue(totalBoxes.rows() == points.rows(), "Inconsistent number of boxes and points");
 
 		FaceAnnotation[] faceAnnotations = new FaceAnnotation[totalBoxes.rows()];
 		for (int i = 0; i < totalBoxes.rows(); i++) {
@@ -544,16 +532,11 @@ public class MtcnnUtil {
 			faceAnnotation.setConfidence(totalBoxes.getDouble(i, 4));
 
 			faceAnnotation.setLandmarks(new FaceAnnotation.Landmark[5]);
-			faceAnnotation.getLandmarks()[0] = FaceAnnotation.Landmark.of(FaceAnnotation.Landmark.LandmarkType.LEFT_EYE,
-					FaceAnnotation.Landmark.Position.of(points.getInt(i, 0), points.getInt(i, 5)));
-			faceAnnotation.getLandmarks()[1] = FaceAnnotation.Landmark.of(FaceAnnotation.Landmark.LandmarkType.RIGHT_EYE,
-					FaceAnnotation.Landmark.Position.of(points.getInt(i, 1), points.getInt(i, 6)));
-			faceAnnotation.getLandmarks()[2] = FaceAnnotation.Landmark.of(FaceAnnotation.Landmark.LandmarkType.NOSE,
-					FaceAnnotation.Landmark.Position.of(points.getInt(i, 2), points.getInt(i, 7)));
-			faceAnnotation.getLandmarks()[3] = FaceAnnotation.Landmark.of(FaceAnnotation.Landmark.LandmarkType.MOUTH_LEFT,
-					FaceAnnotation.Landmark.Position.of(points.getInt(i, 3), points.getInt(i, 8)));
-			faceAnnotation.getLandmarks()[4] = FaceAnnotation.Landmark.of(FaceAnnotation.Landmark.LandmarkType.MOUTH_RIGHT,
-					FaceAnnotation.Landmark.Position.of(points.getInt(i, 4), points.getInt(i, 9)));
+			faceAnnotation.getLandmarks()[0] = FaceAnnotation.Landmark.of(FaceAnnotation.Landmark.LandmarkType.LEFT_EYE, FaceAnnotation.Landmark.Position.of(points.getInt(i, 0), points.getInt(i, 5)));
+			faceAnnotation.getLandmarks()[1] = FaceAnnotation.Landmark.of(FaceAnnotation.Landmark.LandmarkType.RIGHT_EYE, FaceAnnotation.Landmark.Position.of(points.getInt(i, 1), points.getInt(i, 6)));
+			faceAnnotation.getLandmarks()[2] = FaceAnnotation.Landmark.of(FaceAnnotation.Landmark.LandmarkType.NOSE, FaceAnnotation.Landmark.Position.of(points.getInt(i, 2), points.getInt(i, 7)));
+			faceAnnotation.getLandmarks()[3] = FaceAnnotation.Landmark.of(FaceAnnotation.Landmark.LandmarkType.MOUTH_LEFT, FaceAnnotation.Landmark.Position.of(points.getInt(i, 3), points.getInt(i, 8)));
+			faceAnnotation.getLandmarks()[4] = FaceAnnotation.Landmark.of(FaceAnnotation.Landmark.LandmarkType.MOUTH_RIGHT, FaceAnnotation.Landmark.Position.of(points.getInt(i, 4), points.getInt(i, 9)));
 
 			faceAnnotations[i] = faceAnnotation;
 		}
@@ -695,15 +678,6 @@ public class MtcnnUtil {
 	 */
 	public static byte[] toByteArray(BufferedImage bufferedImage) {
 		return ((DataBufferByte) bufferedImage.getRaster().getDataBuffer()).getData();
-	}
-
-	public static BufferedImage to3ByteBGR(BufferedImage image) {
-		if (image.getType() == BufferedImage.TYPE_3BYTE_BGR) {
-			return image;
-		}
-		BufferedImage outputImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
-		outputImage.getGraphics().drawImage(image, 0, 0, null);
-		return outputImage;
 	}
 
 	public static float[] imageByteToFloatArray(byte[] imageBytes) {

@@ -4,30 +4,27 @@
 
 > Note: This is still Work In Progress!
 
-`Java` and `Tensorflow` implementation of the [MTCNN Face Detector](https://arxiv.org/abs/1604.02878). Based on David Sandberg's [FaceNet's MTCNN](https://github.com/davidsandberg/facenet/tree/master/src/align) 
-`python` implementation and the original [Zhang, K et al. (2016) ZHANG2016](https://arxiv.org/abs/1604.02878) paper and [Matlab implementation](https://github.com/kpzhang93/MTCNN_face_detection_alignment).
+Java and Tensorflow implementation of the [MTCNN Face Detector](https://arxiv.org/abs/1604.02878). It is based on David Sandberg's [FaceNet's MTCNN](https://github.com/davidsandberg/facenet/tree/master/src/align) 
+python implementation and the original [Zhang, K et al. (2016) ZHANG2016](https://arxiv.org/abs/1604.02878) paper and related [Matlab implementation](https://github.com/kpzhang93/MTCNN_face_detection_alignment).
 
-[<img align="right" src="https://raw.githubusercontent.com/tzolov/mtcnn-java/master/src/test/resources/docs/scdf-face-detection-2.gif" alt="scdf-mtcnn" hspace="10" vspace="10"></img>](https://github.com/tzolov/computer-vision/blob/master/spring-cloud-starter-stream-processor-face-detection-mtcnn/README.adoc) It reuses the `PNet`, `RNet` and `ONet` Tensorflow models build in [FaceNet's MTCNN](https://github.com/davidsandberg/facenet/tree/master/src/align) and 
-initialized with the original [weights](https://github.com/kpzhang93/MTCNN_face_detection_alignment/tree/master/code/codes/MTCNNv2/model). [Here](https://github.com/davidsandberg/facenet/pull/866) 
-you can find how to freeze the TF models.
+![Input Image](./src/test/resources/docs/scdf-face-detection-2.gif) 
 
-> Note that the required Tensorflow models are already pre-bundled with this project! No need to download or freeze those by yourself.
+It reuses the `PNet`, `RNet` and `ONet` Tensorflow models created in [FaceNet's MTCNN](https://github.com/davidsandberg/facenet/tree/master/src/align) project and 
+initialized with the original pre-trained [weights](https://github.com/kpzhang93/MTCNN_face_detection_alignment/tree/master/code/codes/MTCNNv2/model). Find [here](https://github.com/davidsandberg/facenet/pull/866) 
+how to freeze those models.
 
-The MTCNN technique involves significant amount of linear algebra operations, such as multi-dimensional array computations and so. 
-Therefore the [ND4J](https://deeplearning4j.org/docs/latest/nd4j-overview) library is leveraged for implementing all (pre)processing steps 
-required for flowing the data through the `PNet`, `RNet` and `ONet` Tensorflow networks. Furthermore [JavaCV](https://github.com/bytedeco/javacv) is 
-leveraged for image manipulation and the `ND4J-Tensorflow` GraphRunner is used to inferring the pre-trained tensorflow models. 
-The combination of those libraries allows to exchange processing states between the `ND4J`, `JavaCV` and `Tensorflow` with little data churn. 
-It also provides off-heap memory management and native support for GPU and BLAS processor features.         
+> Note that all necessary Tensorflow models are already pre-bundled with this project! No need to download or freeze those by yourself.
 
-> NOTE: You can find the original NumPy/Python code snippets as inline comments in front of the equivalent ND4J java implementations.
+The MTCNN requires a lot of linear algebra computations such as multi-dimensional array computation. Therefore the [ND4J](https://deeplearning4j.org/docs/latest/nd4j-overview) library is used for implementing the 
+ processing steps that connect the `PNet`, `RNet` and `ONet` Tensorflow networks. Furthermore the [JavaCV](https://github.com/bytedeco/javacv) is leverage for image manipulation and the ND4J-Tensorflow's GraphRunner is used to 
+ inferring the pre-trained tensorflow models. Later allows to share the ND4J and JavaCV intermediate processing states directly with the tensorflow runner, off-heap without need of additional serialization/deserialization.        
 
 ## Quick Start
 
-The [FaceDetectionSample1.java](./src/test/java/net/tzolov/cv/mtcnn/sample/FaceDetectionSample1.java) demonstrates how to use `MtcnnService` for detecting faces in images.
+Samples like [FaceDetectionSample1.java](./src/test/java/net/tzolov/cv/mtcnn/sample/FaceDetectionSample1.java) demonstrates how to use `MtcnnService` for detecting faces in images.
 ![Input Image](./src/test/resources/docs/AnnotatedImage.png)
 
-Here is the essence this sample:
+The essence this sample is this:
 
 ```java
 // 1. Create face detection service.
@@ -46,7 +43,7 @@ try (InputStream imageInputStream = new DefaultResourceLoader() .getResource("cl
     System.out.println("Face Annotations (JSON): " + new ObjectMapper().writeValueAsString(faceAnnotations));
 }
 ```
-It takes an input image detect the faces, produces json annotations and augments the image with the faces. 
+It takes an input image detect the faces in it produces json face annotations and augments the image with the faces. 
 
 The face annotation json format looks like this:
 
@@ -63,7 +60,7 @@ The face annotation json format looks like this:
 }, { ... 
 ```
 ## Rea-Time Face Detection with Spring Cloud Data Flow 
-The [spring-cloud-starter-stream-processor-face-detection-mtcnn](https://github.com/tzolov/computer-vision/tree/master/spring-cloud-starter-stream-processor-face-detection-mtcnn) is 
+The [spring-cloud-starter-stream-processor-face-detection-mtcnn](https://github.com/tzolov/computer-vision/blob/master/spring-cloud-starter-stream-processor-face-detection-mtcnn/README.adoc) is 
 Spring Cloud Data Flow processor that allows detecting and faces in real time from input image or video streams.
 
 ## Maven setup
@@ -73,15 +70,19 @@ Use the following dependency to add the `mtcnn` utility to your project
 <dependency>
   <groupId>net.tzolov.cv</groupId>
   <artifactId>mtcnn</artifactId>
-  <version>0.0.4</version>
+  <version>0.0.3</version>
 </dependency>
 ```
-Also register `jcentral` to your list of maven repository (it is available out of the box for Gradle).
+You may also need to add the following maven repository to your pom:
 ```xml
 <repositories>
     <repository>
-      <id>jcenter</id>
-      <url>https://jcenter.bintray.com/</url>
+        <snapshots>
+            <enabled>false</enabled>
+        </snapshots>
+        <id>bintray-big-data-maven</id>
+        <name>bintray</name>
+        <url>https://dl.bintray.com/big-data/maven</url>
     </repository>
 </repositories>
 ```
@@ -90,18 +91,3 @@ Also register `jcentral` to your list of maven repository (it is available out o
 
 Use this [MtcnnServiceBenchmark](https://github.com/tzolov/mtcnn-java/blob/master/src/test/java/net/tzolov/cv/mtcnn/beanchmark/MtcnnServiceBenchmark.java) to perform some basic benchmarking. You can change the image URI to test
 the performance with different images.   
-
-## Caveats
-
-The ND4J, DataVec, ND4J-Tensorflow and JavaCV all rely on core libraries written in C++ (for performance reasons) and wrapped with JNI (e.g JavaCPP) wrapper. 
-This approach has many great advantages such as support for GPU and BLAS math features, off-heap data management, low latency minimal data churn. 
- Still the approach apparently can induce significant jar footprint. By default if you bundle support for OS platforms (e.g. linux, android, windows, macos ..) 
- the target Spring Boot jar can grow to the insane 1GB jar footprint!
-
-If you know what your target platform is going to be then you can remedy this situation by setting the `-Djavacpp.platform=` property. For example `-Djavacpp.platform=macosx-x86_64` for MacOS target platform.
-
-Another possible solution might be to try to substitute the ND4J, DataVec and JavaCV stack using the newly released 
-[]Tensorflow Java Ops API (ver. 1.10+)](https://github.com/tensorflow/tensorflow/releases/tag/v1.10.0) later appear to have the superset of what above stack 
-provides but in a single C++ library with much small footprint. 
-  
-     
