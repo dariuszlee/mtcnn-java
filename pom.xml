@@ -2,11 +2,19 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
+<<<<<<< Updated upstream
     <groupId>org.countr</groupId>
+=======
+	<groupId>org.countr</groupId>
+>>>>>>> Stashed changes
 	<artifactId>mtcnn</artifactId>
 	<version>0.0.4</version>
 
 	<contributors>
+		<contributor>
+			<name>Darius Lee</name>
+			<email>dariuszlee@outlook.com</email>
+		</contributor>
 		<contributor>
 			<name>Christian Tzolov</name>
 			<email>christian.tzolov@gmail.com</email>
@@ -22,9 +30,9 @@
 	</licenses>
 
 	<scm>
-		<connection>scm:git:https://github.com/tzolov/mtcnn-java</connection>
-		<developerConnection>scm:git:git@github.com:tzolov/mtcnn-java.git</developerConnection>
-		<url>https://github.com/tzolov/mtcnn-java</url>
+		<connection>scm:git:https://github.com/dariuszlee/mtcnn-java</connection>
+		<developerConnection>scm:git:git@github.com:dariuszlee/mtcnn-java.git</developerConnection>
+		<url>https://github.com/dariuszlee/mtcnn-java</url>
 		<tag>mtcnn-0.0.4</tag>
 	</scm>
 
@@ -37,7 +45,6 @@
 
 	<properties>
 		<nd4j.version>1.0.0-beta2</nd4j.version>
-		<!--<nd4j.version>1.0.0-SNAPSHOT</nd4j.version>-->
 		<tensorflow.version>1.9.0</tensorflow.version>
 		<openblas.version>0.3.0</openblas.version>
 		<javacpp-presets.version>1.4.2</javacpp-presets.version>
