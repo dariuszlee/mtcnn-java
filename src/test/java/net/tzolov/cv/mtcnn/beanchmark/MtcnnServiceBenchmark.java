@@ -50,7 +50,7 @@ public class MtcnnServiceBenchmark {
 
 		@Setup(Level.Trial)
 		public void setUp() throws IOException {
-			Nd4j.ENFORCE_NUMERICAL_STABILITY = false;
+			// Nd4j.ENFORCE_NUMERICAL_STABILITY = false;
 
 			mtcnnService = new MtcnnService(30, 0.709, new double[] { 0.6, 0.7, 0.7 });
 

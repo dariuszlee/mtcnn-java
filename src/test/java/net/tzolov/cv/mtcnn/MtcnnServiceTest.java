@@ -41,14 +41,13 @@ public class MtcnnServiceTest {
 	@Test
 	public void testSingeFace() throws IOException {
 		FaceAnnotation[] faceAnnotations = mtcnnService.faceDetection("classpath:/Anthony_Hopkins_0002.jpg");
-		assertThat(toJson(faceAnnotations), equalTo("[{\"bbox\":{\"x\":75,\"y\":67,\"w\":95,\"h\":120}," +
-				"\"confidence\":0.9994938373565674," +
-				"\"landmarks\":[" +
-				"{\"type\":\"LEFT_EYE\",\"position\":{\"x\":101,\"y\":113}}," +
-				"{\"type\":\"RIGHT_EYE\",\"position\":{\"x\":147,\"y\":113}}," +
-				"{\"type\":\"NOSE\",\"position\":{\"x\":124,\"y\":136}}," +
-				"{\"type\":\"MOUTH_LEFT\",\"position\":{\"x\":105,\"y\":160}}," +
-				"{\"type\":\"MOUTH_RIGHT\",\"position\":{\"x\":146,\"y\":160}}]}]"));
+        String toEqual = "[{\"bbox\":{\"x\":74,\"y\":63,\"w\":99,\"h\":125},\"confidence\":0.9996323585510254," + 
+            "\"landmarks\":[{\"type\":\"LEFT_EYE\",\"position\":{\"x\":101,\"y\":114}}," + 
+            "{\"type\":\"RIGHT_EYE\",\"position\":{\"x\":148,\"y\":114}},"+
+            "{\"type\":\"NOSE\",\"position\":{\"x\":124,\"y\":137}},"+
+            "{\"type\":\"MOUTH_LEFT\",\"position\":{\"x\":105,\"y\":160}},"+
+            "{\"type\":\"MOUTH_RIGHT\",\"position\":{\"x\":146,\"y\":160}}]}]";
+		assertThat(toJson(faceAnnotations), equalTo(toEqual));
 	}
 
 	@Test
@@ -60,22 +59,35 @@ public class MtcnnServiceTest {
 	@Test
 	public void testMultiFaces() throws IOException {
 		FaceAnnotation[] faceAnnotations = mtcnnService.faceDetection("classpath:/VikiMaxiAdi.jpg");
-		assertThat(toJson(faceAnnotations), equalTo("[{\"bbox\":{\"x\":102,\"y\":152,\"w\":70,\"h\":86}," +
-				"\"confidence\":0.9999865293502808," +
-				"\"landmarks\":[" +
-				"{\"type\":\"LEFT_EYE\",\"position\":{\"x\":122,\"y\":189}}," +
-				"{\"type\":\"RIGHT_EYE\",\"position\":{\"x\":154,\"y\":190}}," +
-				"{\"type\":\"NOSE\",\"position\":{\"x\":136,\"y\":203}}," +
-				"{\"type\":\"MOUTH_LEFT\",\"position\":{\"x\":122,\"y\":219}}," +
-				"{\"type\":\"MOUTH_RIGHT\",\"position\":{\"x\":151,\"y\":220}}]}," +
-				"{\"bbox\":{\"x\":332,\"y\":94,\"w\":57,\"h\":69}," +
-				"\"confidence\":0.9992565512657166," +
-				"\"landmarks\":[" +
-				"{\"type\":\"LEFT_EYE\",\"position\":{\"x\":346,\"y\":120}}," +
-				"{\"type\":\"RIGHT_EYE\",\"position\":{\"x\":373,\"y\":121}}," +
-				"{\"type\":\"NOSE\",\"position\":{\"x\":357,\"y\":134}}," +
-				"{\"type\":\"MOUTH_LEFT\",\"position\":{\"x\":346,\"y\":147}}," +
-				"{\"type\":\"MOUTH_RIGHT\",\"position\":{\"x\":370,\"y\":148}}]}]"));
+        String toEqual = "[{\"bbox\":{\"x\":332,\"y\":94,\"w\":57,\"h\":69},\"confidence\":0.9999037981033325,"+
+            "\"landmarks\":[{\"type\":\"LEFT_EYE\","+
+            "\"position\":{\"x\":346,\"y\":120}},"+
+            "{\"type\":\"RIGHT_EYE\",\"position\":{\"x\":373,\"y\":121}},"+
+            "{\"type\":\"NOSE\",\"position\":{\"x\":357,\"y\":134}},"+
+            "{\"type\":\"MOUTH_LEFT\",\"position\":{\"x\":346,\"y\":147}},"+
+            "{\"type\":\"MOUTH_RIGHT\",\"position\":{\"x\":370,\"y\":148}}]},"+
+            "{\"bbox\":{\"x\":101,\"y\":155,\"w\":70,\"h\":83},\"confidence\":0.9995300769805908,"+
+            "\"landmarks\":[{\"type\":\"LEFT_EYE\",\"position\":{\"x\":121,\"y\":188}},"+
+            "{\"type\":\"RIGHT_EYE\",\"position\":{\"x\":153,\"y\":190}},"+
+            "{\"type\":\"NOSE\",\"position\":{\"x\":136,\"y\":203}},"+
+            "{\"type\":\"MOUTH_LEFT\",\"position\":{\"x\":122,\"y\":218}},"+
+            "{\"type\":\"MOUTH_RIGHT\",\"position\":{\"x\":150,\"y\":220}}]},"+
+            "{\"bbox\":{\"x\":102,\"y\":157,\"w\":66,\"h\":80},"+
+            "\"confidence\":0.9988951086997986,"+
+            "\"landmarks\":[{\"type\":\"LEFT_EYE\",\"position\":{\"x\":122,\"y\":188}},"+
+            "{\"type\":\"RIGHT_EYE\",\"position\":{\"x\":153,\"y\":190}},"+
+            "{\"type\":\"NOSE\",\"position\":{\"x\":136,\"y\":203}},"+
+            "{\"type\":\"MOUTH_LEFT\",\"position\":{\"x\":122,\"y\":217}},"+
+            "{\"type\":\"MOUTH_RIGHT\",\"position\":{\"x\":149,\"y\":219}}]},"+
+            "{\"bbox\":{\"x\":332,\"y\":92,\"w\":56,\"h\":72},"+
+            "\"confidence\":0.9974604845046997,"+
+            "\"landmarks\":[{\"type\":\"LEFT_EYE\","+
+            "\"position\":{\"x\":347,\"y\":121}},"+
+            "{\"type\":\"RIGHT_EYE\",\"position\":{\"x\":374,\"y\":121}},"+
+            "{\"type\":\"NOSE\",\"position\":{\"x\":358,\"y\":134}},"+
+            "{\"type\":\"MOUTH_LEFT\",\"position\":{\"x\":348,\"y\":148}},"+
+            "{\"type\":\"MOUTH_RIGHT\",\"position\":{\"x\":370,\"y\":148}}]}]";
+	    assertThat(toJson(faceAnnotations), equalTo(toEqual));
 	}
 
 	private String toJson(FaceAnnotation[] faceAnnotations) throws JsonProcessingException {

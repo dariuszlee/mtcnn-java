@@ -40,8 +40,7 @@
 	</distributionManagement>
 
 	<properties>
-		<nd4j.version>1.0.0-beta2</nd4j.version>
-		<tensorflow.version>1.9.0</tensorflow.version>
+		<nd4j.version>1.0.0-beta6</nd4j.version>
 		<openblas.version>0.3.0</openblas.version>
 		<javacpp-presets.version>1.4.2</javacpp-presets.version>
 		<mkl.version>2018.3</mkl.version>
@@ -53,30 +52,6 @@
 	</properties>
 
 	<dependencies>
-		<!-- for ND4J SnapShot only -->
-		<!--<dependency>-->
-			<!--<groupId>org.nd4j</groupId>-->
-			<!--<artifactId>nd4j-native</artifactId>-->
-			<!--<version>${nd4j.version}</version>-->
-		<!--</dependency>-->
-		<!--<dependency>-->
-			<!--<groupId>org.bytedeco.javacpp-presets</groupId>-->
-			<!--<artifactId>openblas-platform</artifactId>-->
-			<!--<version>${openblas.version}-${javacpp-presets.version}</version>-->
-		<!--</dependency>-->
-		<!--<dependency>-->
-			<!--<groupId>org.bytedeco.javacpp-presets</groupId>-->
-			<!--<artifactId>mkl-platform</artifactId>-->
-			<!--<version>${mkl.version}-${javacpp-presets.version}</version>-->
-		<!--</dependency>-->
-		<!--<dependency>-->
-			<!--<groupId>org.bytedeco.javacpp-presets</groupId>-->
-			<!--<artifactId>mkl-dnn-platform</artifactId>-->
-			<!--<version>${mkl-dnn.version}-${javacpp-presets.version}</version>-->
-		<!--</dependency>-->
-		<!-- for ND4J SnapShot only -->
-
-		<!-- for ND4J RELEASE only -->
 		<dependency>
 			<groupId>org.nd4j</groupId>
 			<artifactId>nd4j-native-platform</artifactId>
@@ -107,11 +82,6 @@
 			<groupId>org.nd4j</groupId>
 			<artifactId>nd4j-tensorflow</artifactId>
 			<version>${nd4j.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.bytedeco.javacpp-presets</groupId>
-			<artifactId>tensorflow-platform</artifactId>
-			<version>${tensorflow.version}-${javacpp-presets.version}</version>
 		</dependency>
 
 		<!-- ND4J DataVec -->
@@ -201,19 +171,4 @@
 
 		</plugins>
 	</build>
-
-	<repositories>
-		<repository>
-			<id>sonatype-nexus-snapshots</id>
-			<name>Sonatype Nexus Snapshots</name>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-				<updatePolicy>daily</updatePolicy>  <!-- Optional, update daily -->
-			</snapshots>
-		</repository>
-	</repositories>
 </project>

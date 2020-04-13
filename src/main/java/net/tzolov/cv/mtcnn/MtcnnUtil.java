@@ -27,13 +27,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Predicate;
 
 import javax.imageio.ImageIO;
 
 import org.nd4j.linalg.api.buffer.DataBuffer;
+import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.cpu.nativecpu.NDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.SpecifiedIndex;
@@ -130,7 +134,8 @@ public class MtcnnUtil {
 		tmp = getIndexWhereVector(ey, value -> value > h);
 		//tmp = getIndexWhereVector2(ey, Conditions.greaterThan(h));
 		if (!tmp.isEmpty()) {
-			INDArray b = ey.get(tmp).rsub(h).add(tmpH.get(tmp));
+			INDArray b = MtcnnUtil.getFromIndices(ey, tmp)
+                .rsub(h).add(MtcnnUtil.getFromIndices(tmpH, tmp));
 			if (b.isScalar()) {
 				edy = edy.putScalar(tmp.toLongVector(), b.getInt(0));
 				ey = ey.putScalar(tmp.toLongVector(), h);
@@ -149,13 +154,13 @@ public class MtcnnUtil {
 		tmp = getIndexWhereVector(x, value -> value < 1);
 		//tmp = getIndexWhereVector2(x, Conditions.lessThan(1));
 		if (!tmp.isEmpty()) {
-			INDArray b = x.get(tmp).rsub(2);
+			INDArray b = MtcnnUtil.getFromIndices(x, tmp).rsub(2);
 			if (b.isScalar()) {
 				dx.putScalar(tmp.toLongVector(), b.getInt(0));
 				x = x.putScalar(tmp.toLongVector(), 1);
 			}
 			else {
-				INDArray updateValues = Nd4j.expandDims(x.get(tmp).rsub(2), 1);
+				INDArray updateValues = MtcnnUtil.getFromIndices(x, tmp).rsub(2);
 				dx.put(toUpdateIndex(tmp), updateValues);
 				// x.put(toUpdateIndex(tmp), 1); // BUG
 				x = x.put(toUpdateIndex(tmp), Nd4j.onesLike(tmp));
@@ -201,28 +206,18 @@ public class MtcnnUtil {
 	 */
 	public static INDArray bbreg(INDArray boundingBox, INDArray reg) {
 
-		// if reg.shape[1] == 1:
-		//    reg = np.reshape(reg, (reg.shape[2], reg.shape[3]))
-		if (reg.shape()[1] == 1) {
-			//reg = reg.reshape(reg.shape()[2], reg.shape()[3]);
-			reg = reg.transpose();
-		}
+        reg = reg.transpose();
 
-		// w = boundingbox[:, 2] - boundingbox[:, 0] + 1
-		// h = boundingbox[:, 3] - boundingbox[:, 1] + 1
-		// b1 = boundingbox[:, 0] + reg[:, 0] * w
-		// b2 = boundingbox[:, 1] + reg[:, 1] * h
-		// b3 = boundingbox[:, 2] + reg[:, 2] * w
-		// b4 = boundingbox[:, 3] + reg[:, 3] * h
 		INDArray w = boundingBox.get(all(), point(2)).sub(boundingBox.get(all(), point(0))).addi(1);
 		INDArray h = boundingBox.get(all(), point(3)).sub(boundingBox.get(all(), point(1))).addi(1);
-		INDArray b1 = boundingBox.get(all(), point(0)).add(reg.get(all(), point(0)).mul(w)).transpose();
-		INDArray b2 = boundingBox.get(all(), point(1)).add(reg.get(all(), point(1)).mul(h)).transpose();
-		INDArray b3 = boundingBox.get(all(), point(2)).add(reg.get(all(), point(2)).mul(w)).transpose();
-		INDArray b4 = boundingBox.get(all(), point(3)).add(reg.get(all(), point(3)).mul(h)).transpose();
+		INDArray b1 = boundingBox.get(all(), point(0)).add(reg.get(all(), point(0)).mul(w));
+		INDArray b2 = boundingBox.get(all(), point(1)).add(reg.get(all(), point(1)).mul(h));
+		INDArray b3 = boundingBox.get(all(), point(2)).add(reg.get(all(), point(2)).mul(w));
+		INDArray b4 = boundingBox.get(all(), point(3)).add(reg.get(all(), point(3)).mul(h));
 
 		// boundingbox[:, 0:4] = np.transpose(np.vstack([b1, b2, b3, b4]))
-		boundingBox.put(new INDArrayIndex[] { all(), interval(0, 4) }, Nd4j.vstack(b1, b2, b3, b4).transpose());
+        INDArray temp = Nd4j.vstack(b1, b2, b3, b4).transpose();
+		boundingBox.put(new INDArrayIndex[] { all(), interval(0, 4) }, temp);
 		return boundingBox;
 	}
 
@@ -286,11 +281,12 @@ public class MtcnnUtil {
 
 		// sorted_s = np.argsort(s)
 		INDArray sortedS = Nd4j.sortWithIndices(s, 0, SORT_ASCENDING)[0];
+        // sortedS = sortedS.reshape(1, sortedS.length());
 
 		INDArray pick = Nd4j.zerosLike(s);
 		int counter = 0;
 
-		while (sortedS.size(0) > 0) {
+		while (sortedS.columns() > 0) {
 
 			if (sortedS.size(0) == 1) {
 				pick.put(counter++, sortedS.dup());
@@ -298,14 +294,17 @@ public class MtcnnUtil {
 			}
 
 			long lastIndex = sortedS.size(0) - 1;
-			INDArray i = sortedS.get(point(lastIndex), all()); // last element
-			INDArray idx = sortedS.get(interval(0, lastIndex), all()).transpose(); // all until last excluding
+			INDArray i = sortedS.get(point(lastIndex)); // last element
+			INDArray idx = sortedS.get(interval(0, lastIndex));
 			pick.put(counter++, i.dup());
 
-			INDArray xx1 = Transforms.max(x1.get(idx), x1.get(i).getInt(0));
-			INDArray yy1 = Transforms.max(y1.get(idx), y1.get(i).getInt(0));
-			INDArray xx2 = Transforms.min(x2.get(idx), x2.get(i).getInt(0));
-			INDArray yy2 = Transforms.min(y2.get(idx), y2.get(i).getInt(0));
+            INDArrayIndex idx2 = interval(0, lastIndex);
+            INDArrayIndex i2 = point(lastIndex);
+			INDArray xx1 = Transforms.max(x1.get(idx2), x1.get(i2).getInt(0));
+			INDArray yy1 = Transforms.max(y1.get(idx2), 
+                    y1.get(i2).getInt(0));
+			INDArray xx2 = Transforms.min(x2.get(idx2), x2.get(i2).getInt(0));
+			INDArray yy2 = Transforms.min(y2.get(idx2), y2.get(i2).getInt(0));
 
 			// w = np.maximum(0.0, xx2 - xx1 + 1)
 			// h = np.maximum(0.0, yy2 - yy1 + 1)
@@ -318,24 +317,56 @@ public class MtcnnUtil {
 			//   o = inter / np.minimum(area[i], area[idx])
 			// else:
 			//   o = inter / (area[i] + area[idx] - inter)
-			int areaI = area.get(i).getInt(0);
+			int areaI = area.get(i2).getInt(0);
 			INDArray o = (nmsType == NonMaxSuppressionType.Min) ?
-					inter.div(Transforms.min(area.get(idx), areaI)) :
-					inter.div(area.get(idx).add(areaI).sub(inter));
+					inter.div(Transforms.min(area.get(idx2), areaI)) :
+					inter.div(area.get(idx2).add(areaI).sub(inter));
 
 			INDArray oIdx = MtcnnUtil.getIndexWhereVector(o, value -> value <= threshold);
-			//INDArray oIdx = getIndexWhereVector2(o, Conditions.lessThanOrEqual(threshold));
 
 			if (oIdx.isEmpty()) {
 				break;
 			}
 
-			sortedS = Nd4j.expandDims(sortedS.get(oIdx), 0).transpose();
+            // INDArrayIndex[] oidx2 = Arrays.stream(oIdx.toLongVector())
+            //     .map(x -> point(x)).toArray(INDArrayIndex[]::new);
+            float[] intArrayIndices = new float[(int) oIdx.length()];
+            int vI = 0;
+            for(int oId: oIdx.toIntVector()) {
+                intArrayIndices[vI] = sortedS.get(point(oId)).getFloat(0);
+                vI += 1;
+            }
+            INDArray ss = new NDArray(intArrayIndices);
+            sortedS = ss.ravel();
 		}
 
 		//pick = pick[0:counter]
 		return (counter == 0) ? Nd4j.empty() : pick.get(interval(0, counter));
 	}
+    public static INDArray getFromIndices2D(INDArray toGetFrom, INDArray indices) {
+        float[] intArrayIndices = new float[(int) indices.length()];
+        int vI = 0;
+        for(int oId: indices.toIntVector()) {
+            intArrayIndices[vI] = toGetFrom.get(point(oId)).getFloat(0);
+            vI += 1;
+        }
+        INDArray ss = new NDArray(intArrayIndices);
+        return ss.getColumn(0);
+    }
+
+    public static INDArray getFromIndices(INDArray toGetFrom, INDArray indices) {
+        // if (toGetFrom.rank() == 2) {
+        //     return getFromIndices2D(toGetFrom, indices);
+        // }
+        float[] intArrayIndices = new float[(int) indices.length()];
+        int vI = 0;
+        for(int oId: indices.toIntVector()) {
+            intArrayIndices[vI] = toGetFrom.get(point(oId)).getFloat(0);
+            vI += 1;
+        }
+        INDArray ss = new NDArray(intArrayIndices);
+        return ss.getColumn(0);
+    }
 
 
 	/**
@@ -401,7 +432,12 @@ public class MtcnnUtil {
 			outReg = Nd4j.empty();
 		}
 
-		INDArray score = imap.get(yx).transpose();
+		INDArray score = imap.get(yx);
+        float[] newVec = score.toFloatVector();
+        float[][] newMat = new float[1][newVec.length];
+        newMat[0] = newVec;
+        score = new NDArray(newMat);
+        score = score.transpose();
 
 		INDArray boundingBox = Nd4j.hstack(q1, q2, score, outReg);
 
@@ -435,7 +471,7 @@ public class MtcnnUtil {
 			}
 		}
 
-		return CollectionUtils.isEmpty(indexes) ? Nd4j.empty(DataBuffer.Type.FLOAT) : Nd4j.create(indexes);
+		return CollectionUtils.isEmpty(indexes) ? Nd4j.empty(DataType.FLOAT) : Nd4j.create(indexes);
 	}
 
 	/**
