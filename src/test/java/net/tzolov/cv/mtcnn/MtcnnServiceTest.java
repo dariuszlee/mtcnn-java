@@ -38,6 +38,13 @@ public class MtcnnServiceTest {
 		mtcnnService = new MtcnnService(20, 0.709, new double[] { 0.6, 0.7, 0.7 });
 	}
 
+    @Test
+    public void testInvalidPadding() throws IOException {
+        String path = "classpath:0001_00_00_01_0.jpg";
+		FaceAnnotation[] faceAnnotations = mtcnnService.faceDetection(path);
+        System.out.println("DARIUS " + toJson(faceAnnotations));
+    }
+
 	@Test
 	public void testSingeFace() throws IOException {
 		FaceAnnotation[] faceAnnotations = mtcnnService.faceDetection("classpath:/Anthony_Hopkins_0002.jpg");

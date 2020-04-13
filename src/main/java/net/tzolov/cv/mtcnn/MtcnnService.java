@@ -509,24 +509,14 @@ public class MtcnnService {
 	 */
 	public INDArray resize(INDArray imageCHW, Size newSizeWH) throws IOException {
 		Assert.isTrue(imageCHW.size(0) == CHANNEL_COUNT, "Input image is expected to have the [3, W, H] dimensions");
-		// Mat expects [C, H, W] dimensions
         Mat mat = imageLoader.asMat(imageCHW);
-        // opencv_core.Mat mat2 = new opencv_core.Mat((Pointer) null) {{address = mat.getNativeObjAddr();}};
 
         opencv_imgproc.resize(mat, mat, newSizeWH, 0, 0, opencv_imgproc.CV_INTER_AREA);
 
-		//// Mat mat = imageLoader.asMat(imageCHW);
-		//// Imgproc.resize(mat, mat, newSizeWH, 0, 0, Imgproc.CV_INTER_AREA);
-		////[0, W, H, 3]
-        //INDArray resized = Nd4j.create(newSizeWH.height(), newSizeWH.width());
-        //resized.get(NDArrayIndex.createCoveringShape(imageCHW.shape())).assign(imageCHW);
-
-		// return resized;
         return imageLoader.asMatrix(mat);
 	}
 
 	public static void main(String[] args) throws IOException {
-		//MtcnnService mtcnnService = new MtcnnService(20, 0.709, new double[] { 0.6, 0.7, 0.7 });
 		MtcnnService mtcnnService = new MtcnnService(30, 0.709, new double[] { 0.6, 0.7, 0.7 });
 		String imageUri1 = "file:src/test/resources/VikiMaxiAdi.jpg";
 		String imageUri2 = "file:src/test/resources/Anthony_Hopkins_0002.jpg";
