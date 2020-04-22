@@ -42,7 +42,6 @@ public class MtcnnServiceTest {
     public void testInvalidPadding() throws IOException {
         String path = "classpath:0001_00_00_01_0.jpg";
 		FaceAnnotation[] faceAnnotations = mtcnnService.faceDetection(path);
-        System.out.println("DARIUS " + toJson(faceAnnotations));
     }
 
 	@Test

@@ -31,6 +31,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.imageio.ImageIO;
 
@@ -86,9 +88,9 @@ public class MtcnnService {
 
 		this.imageLoader = new Java2DNativeImageLoader();
 
-		this.proposeNetGraphRunner = this.createGraphRunner(TF_PNET_MODEL_URI, "pnet/input", List.of("pnet/conv4-2/BiasAdd", "pnet/prob1"));
-		this.refineNetGraphRunner = this.createGraphRunner(TF_RNET_MODEL_URI, "rnet/input", List.of("rnet/prob1", "rnet/conv5-2/conv5-2"));
-		this.outputNetGraphRunner = this.createGraphRunner(TF_ONET_MODEL_URI, "onet/input", List.of("onet/conv6-2/conv6-2", "onet/conv6-3/conv6-3", "onet/prob1"));
+		this.proposeNetGraphRunner = this.createGraphRunner(TF_PNET_MODEL_URI, "pnet/input", Stream.of("pnet/conv4-2/BiasAdd", "pnet/prob1").collect(Collectors.toList()));
+		this.refineNetGraphRunner = this.createGraphRunner(TF_RNET_MODEL_URI, "rnet/input", Stream.of("rnet/prob1", "rnet/conv5-2/conv5-2").collect(Collectors.toList()));
+		this.outputNetGraphRunner = this.createGraphRunner(TF_ONET_MODEL_URI, "onet/input", Stream.of("onet/conv6-2/conv6-2", "onet/conv6-3/conv6-3", "onet/prob1").collect(Collectors.toList()));
 	}
 
 	private GraphRunner createGraphRunner(String tensorflowModelUri, String inputLabel, List<String> outputLabels) {
@@ -113,10 +115,8 @@ public class MtcnnService {
 	 * @throws IOException Incorrect image Uri.
 	 */
 	public FaceAnnotation[] faceDetection(String imageUri) throws IOException {
-		// [ 3 x H x W ]
 		INDArray image = this.imageLoader.asMatrix(new DefaultResourceLoader().getResource(imageUri).getInputStream())
 				.get(point(0), interval(0,3), all(), all()).dup();
-				// .get(point(0), all(), all(), all()).dup();
 		return faceDetection(image);
 	}
 
@@ -151,7 +151,6 @@ public class MtcnnService {
 	 * @return Array of face bounding boxes found in the image
 	 */
 	public FaceAnnotation[] faceDetection(INDArray image3HW) throws IOException {
-
 		INDArray[] outputStageResult = this.rawFaceDetection(image3HW);
 
 		// Convert result into Bounding Box array

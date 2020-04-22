@@ -116,7 +116,7 @@ public class MtcnnUtil {
 		//INDArray tmp = getIndexWhereVector2(ex, Conditions.greaterThan(w));
 
 		if (!tmp.isEmpty()) {
-			INDArray b = ex.get(tmp).rsub(w).add(tmpW.get(tmp));
+			INDArray b = MtcnnUtil.getFromIndices(ex, tmp).rsub(w).add(MtcnnUtil.getFromIndices(tmpW, tmp));
 			if (b.isScalar()) {
 				edx = edx.putScalar(tmp.toLongVector(), b.getInt(0));
 				ex = ex.putScalar(tmp.toLongVector(), w);
@@ -173,7 +173,7 @@ public class MtcnnUtil {
 		tmp = getIndexWhereVector(y, value -> value < 1);
 		//tmp = getIndexWhereVector2(y, Conditions.lessThan(1));
 		if (!tmp.isEmpty()) {
-			INDArray b = y.get(tmp).rsub(2);
+			INDArray b = MtcnnUtil.getFromIndices(y, tmp).rsub(2);
 			if (b.isScalar()) {
 				dy.putScalar(tmp.toLongVector(), b.getInt(0));
 				//y.put(toUpdateIndex(tmp), 1); // BUG
