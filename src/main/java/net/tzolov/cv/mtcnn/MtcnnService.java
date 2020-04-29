@@ -469,14 +469,26 @@ public class MtcnnService {
 			//tmp = np.zeros((int(stage_status.tmph[k]), int(stage_status.tmpw[k]), 3))
 			INDArray tmp = Nd4j.zeros(new int[] { padResult.getTmph().getInt(k), padResult.getTmpw().getInt(k), CHANNEL_COUNT }, C_ORDERING);
 
-			tmp.put(new INDArrayIndex[] {
-							interval(padResult.getDy().getInt(k) - 1, padResult.getEdy().getInt(k)),
-							interval(padResult.getDx().getInt(k) - 1, padResult.getEdx().getInt(k)),
-							all() },
-					image.get(
-							interval(padResult.getY().getInt(k) - 1, padResult.getEy().getInt(k)),
-							interval(padResult.getX().getInt(k) - 1, padResult.getEx().getInt(k)),
-							all()));
+            System.out.println("DARIUS TMP SHAPE " + tmp.shapeInfoToString());
+            System.out.println("DARIUS K " + k);
+            System.out.println("DARIUS " + (padResult.getDx().getInt(k) - 1) + " " + padResult.getEdx().getInt(k));
+            System.out.println("DARIUS DX" + padResult.getDx());
+            System.out.println("DARIUS eDX" + padResult.getEdx());
+            System.out.println("DARIUS X" + padResult.getX());
+            System.out.println("DARIUS Ex" + padResult.getEx());
+            INDArrayIndex[] toInsert = new INDArrayIndex[] {
+                interval(padResult.getDy().getInt(k) - 1, padResult.getEdy().getInt(k)),
+                interval(padResult.getDx().getInt(k) - 1, padResult.getEdx().getInt(k)),
+                all() };
+            System.out.println("DARIUS toinsert " + Arrays.deepToString(toInsert));
+            INDArrayIndex[] toGet = new INDArrayIndex[] {
+                interval(padResult.getY().getInt(k) - 1, padResult.getEy().getInt(k)),
+				interval(padResult.getX().getInt(k) - 1, padResult.getEx().getInt(k)),
+				all()
+            };
+            System.out.println("DARIUS toGet " + Arrays.deepToString(toGet));
+            System.out.println("DARIUS image " + image.shapeInfoToString());
+			tmp.put(toInsert, image.get(toGet));
 
 			if ((tmp.shape()[0] > 0 && tmp.shape()[1] > 0) || (tmp.shape()[0] == 0 && tmp.shape()[1] == 0)) {
 

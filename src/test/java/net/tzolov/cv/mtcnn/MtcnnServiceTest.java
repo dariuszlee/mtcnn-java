@@ -63,6 +63,12 @@ public class MtcnnServiceTest {
 	}
 
 	@Test
+	public void testPadWithMultipleThresholds() throws IOException {
+		FaceAnnotation[] faceAnnotations = mtcnnService.faceDetection("classpath:/MaxID.png");
+		// assertThat(toJson(faceAnnotations), equalTo("[]"));
+	}
+
+	@Test
 	public void testMultiFaces() throws IOException {
 		FaceAnnotation[] faceAnnotations = mtcnnService.faceDetection("classpath:/VikiMaxiAdi.jpg");
         String toEqual = "[{\"bbox\":{\"x\":332,\"y\":94,\"w\":57,\"h\":69},\"confidence\":0.9999037981033325,"+

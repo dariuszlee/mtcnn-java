@@ -82,109 +82,47 @@ public class MtcnnUtil {
 	}
 
 	public static PadResult pad(INDArray totalBoxes, int w, int h) {
-
-		// compute the padding coordinates (pad the bounding boxes to square)
-		//        tmpw = (total_boxes[:, 2] - total_boxes[:, 0] + 1).astype(np.int32)
-		//        tmph = (total_boxes[:, 3] - total_boxes[:, 1] + 1).astype(np.int32)
-		//        numbox = total_boxes.shape[0]
 		INDArray tmpW = Transforms.floor(totalBoxes.get(all(), point(2)).sub(totalBoxes.get(all(), point(0))).add(1));
 		INDArray tmpH = Transforms.floor(totalBoxes.get(all(), point(3)).sub(totalBoxes.get(all(), point(1))).add(1));
 		long numBox = totalBoxes.shape()[0]; // == totalBoxes.size(0);
 
-		// dx = np.ones(numbox, dtype=np.int32)
-		// dy = np.ones(numbox, dtype=np.int32)
-		// edx = tmpw.copy().astype(np.int32)
-		//  edy = tmph.copy().astype(np.int32)
-		INDArray dx = Nd4j.ones(numBox);
-		INDArray dy = Nd4j.ones(numBox);
-		INDArray edx = tmpW;
-		INDArray edy = tmpH;
+		INDArray dx = Nd4j.zeros(numBox);
+		INDArray dy = Nd4j.zeros(numBox);
+		INDArray edx = tmpW.sub(1);
+		INDArray edy = tmpH.sub(1);
 
-		// x = total_boxes[:, 0].copy().astype(np.int32)
-		// y = total_boxes[:, 1].copy().astype(np.int32)
-		// ex = total_boxes[:, 2].copy().astype(np.int32)
-		// ey = total_boxes[:, 3].copy().astype(np.int32)
 		INDArray x = Transforms.floor(totalBoxes.get(all(), point(0)));
 		INDArray y = Transforms.floor(totalBoxes.get(all(), point(1)));
 		INDArray ex = Transforms.floor(totalBoxes.get(all(), point(2)));
 		INDArray ey = Transforms.floor(totalBoxes.get(all(), point(3)));
 
-		// tmp = np.where(ex > w)
-		// edx.flat[tmp] = np.expand_dims(-ex[tmp] + w + tmpw[tmp], 1)
-		// ex[tmp] = w
-		INDArray tmp = getIndexWhereVector(ex, value -> value > w);
-		//INDArray tmp = getIndexWhereVector2(ex, Conditions.greaterThan(w));
-
+		INDArray tmp = getIndexWhereVector(ex, value -> value > w - 1);
 		if (!tmp.isEmpty()) {
-			INDArray b = MtcnnUtil.getFromIndices(ex, tmp).rsub(w).add(MtcnnUtil.getFromIndices(tmpW, tmp));
-			if (b.isScalar()) {
-				edx = edx.putScalar(tmp.toLongVector(), b.getInt(0));
-				ex = ex.putScalar(tmp.toLongVector(), w);
-			}
-			else {
-				INDArray updateValue = Nd4j.expandDims(b, 1);
-				edx = edx.put(toUpdateIndex(tmp), updateValue);
-				ex = ex.put(toUpdateIndex(tmp), Nd4j.zerosLike(tmp).add(w));
-			}
+			INDArray b = MtcnnUtil.getFromIndices(ex, tmp).rsub(w - 2).add(MtcnnUtil.getFromIndices(tmpW, tmp));
+            edx = edx.put(toUpdateIndex(tmp), b);
+            ex = ex.put(toUpdateIndex(tmp), Nd4j.zeros(tmp.shape()).add(w - 1));
 		}
 
-		// tmp = np.where(ey > h)
-		// edy.flat[tmp] = np.expand_dims(-ey[tmp] + h + tmph[tmp], 1)
-		// ey[tmp] = h
-		tmp = getIndexWhereVector(ey, value -> value > h);
-		//tmp = getIndexWhereVector2(ey, Conditions.greaterThan(h));
+		tmp = getIndexWhereVector(ey, value -> value > h - 1);
 		if (!tmp.isEmpty()) {
 			INDArray b = MtcnnUtil.getFromIndices(ey, tmp)
-                .rsub(h).add(MtcnnUtil.getFromIndices(tmpH, tmp));
-			if (b.isScalar()) {
-				edy = edy.putScalar(tmp.toLongVector(), b.getInt(0));
-				ey = ey.putScalar(tmp.toLongVector(), h);
-			}
-			else {
-				INDArray updateValues = Nd4j.expandDims(b, 1);
-				edy = edy.put(toUpdateIndex(tmp), updateValues);
-				ey = ey.put(toUpdateIndex(tmp), Nd4j.zerosLike(tmp).add(h));
-				//ey = ey.put(toUpdateIndex(tmp), h); // BUG
-			}
+                .rsub(h - 2).add(MtcnnUtil.getFromIndices(tmpH, tmp));
+            edy = edy.put(toUpdateIndex(tmp), b);
+            ey = ey.put(toUpdateIndex(tmp), Nd4j.zeros(tmp.shape()).add(h - 1));
 		}
 
-		//  tmp = np.where(x < 1)
-		//  dx.flat[tmp] = np.expand_dims(2 - x[tmp], 1)
-		//  x[tmp] = 1
-		tmp = getIndexWhereVector(x, value -> value < 1);
-		//tmp = getIndexWhereVector2(x, Conditions.lessThan(1));
+		tmp = getIndexWhereVector(x, value -> value < 0);
 		if (!tmp.isEmpty()) {
-			INDArray b = MtcnnUtil.getFromIndices(x, tmp).rsub(2);
-			if (b.isScalar()) {
-				dx.putScalar(tmp.toLongVector(), b.getInt(0));
-				x = x.putScalar(tmp.toLongVector(), 1);
-			}
-			else {
-				INDArray updateValues = MtcnnUtil.getFromIndices(x, tmp).rsub(2);
-				dx.put(toUpdateIndex(tmp), updateValues);
-				// x.put(toUpdateIndex(tmp), 1); // BUG
-				x = x.put(toUpdateIndex(tmp), Nd4j.onesLike(tmp));
-			}
+            INDArray updateValues = MtcnnUtil.getFromIndices(x, tmp).rsub(0);
+            dx.put(toUpdateIndex(tmp), updateValues);
+            x = x.put(toUpdateIndex(tmp), Nd4j.zeros(tmp.shape()));
 		}
 
-		// tmp = np.where(y < 1)
-		// dy.flat[tmp] = np.expand_dims(2 - y[tmp], 1)
-		// y[tmp] = 1
-		tmp = getIndexWhereVector(y, value -> value < 1);
-		//tmp = getIndexWhereVector2(y, Conditions.lessThan(1));
+		tmp = getIndexWhereVector(y, value -> value < 0);
 		if (!tmp.isEmpty()) {
-			INDArray b = MtcnnUtil.getFromIndices(y, tmp).rsub(2);
-			if (b.isScalar()) {
-				dy.putScalar(tmp.toLongVector(), b.getInt(0));
-				//y.put(toUpdateIndex(tmp), 1); // BUG
-				y = y.putScalar(tmp.toLongVector(), 1);
-			}
-			else {
-				INDArray updateValues = Nd4j.expandDims(b, 1);
-				dy.put(toUpdateIndex(tmp), updateValues);
-				y = y.put(toUpdateIndex(tmp), Nd4j.onesLike(tmp));
-				//y.put(toUpdateIndex(tmp), 1); // BUG
-			}
+			INDArray b = MtcnnUtil.getFromIndices(y, tmp).rsub(0);
+            dy.put(toUpdateIndex(tmp), b);
+            y = y.put(toUpdateIndex(tmp), Nd4j.zeros(tmp.shape()));
 		}
 
 		return new PadResult(dy, edy, dx, edx, y, ey, x, ex, tmpW, tmpH);
