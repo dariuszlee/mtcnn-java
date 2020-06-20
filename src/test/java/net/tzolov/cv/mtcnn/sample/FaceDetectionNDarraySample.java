@@ -42,7 +42,6 @@ public class FaceDetectionNDarraySample {
 
 	public static void main(String[] args) throws IOException {
 
-		MtcnnService mtcnnService = new MtcnnService(30, 0.709, new double[] { 0.6, 0.7, 0.7 });
 
 		// Image loading and conversion utilities (part of DataVec)
 		Java2DNativeImageLoader imageLoader = new Java2DNativeImageLoader();
@@ -51,6 +50,7 @@ public class FaceDetectionNDarraySample {
 		String inputImageUri = "classpath:/pivotal-ipo-nyse.jpg";
 		try (InputStream imageInputStream = new DefaultResourceLoader().getResource(inputImageUri).getInputStream()) {
 			INDArray originalImage = imageLoader.asMatrix(imageInputStream).get(point(0), all(), all(), all()).dup();
+      MtcnnService mtcnnService = new MtcnnService(30, 0.709, new double[] { 0.6, 0.7, 0.7 }, (int)originalImage.size(2), (int)originalImage.size(3));
 			BufferedImage annotatedImage = MtcnnUtil.drawFaceAnnotations(imageLoader.asBufferedImage(originalImage),
 					mtcnnService.faceDetection(originalImage));
 			ImageIO.write(annotatedImage, "png", new File("./AnnotatedImage.png"));

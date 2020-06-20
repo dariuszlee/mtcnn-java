@@ -37,7 +37,6 @@ public class FaceDetectionSample1 {
 
 	public static void main(String[] args) throws IOException {
 
-		MtcnnService mtcnnService = new MtcnnService(30, 0.709, new double[] { 0.6, 0.7, 0.7 });
 
 		ObjectMapper jsonMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 
@@ -45,6 +44,7 @@ public class FaceDetectionSample1 {
 				.getResource("classpath:/pivotal-ipo-nyse.jpg").getInputStream()) {
 			// 1. Load the input image (you can use http:/, file:/ or classpath:/ URIs to resolve the input image
 			BufferedImage inputImage = ImageIO.read(imageInputStream);
+      MtcnnService mtcnnService = new MtcnnService(30, 0.709, new double[] { 0.6, 0.7, 0.7 }, inputImage.getHeight(), inputImage.getWidth());
 			// 2. Run face detection
 			FaceAnnotation[] faceAnnotations = mtcnnService.faceDetection(inputImage);
 			// 3. Augment the input image with the detected faces

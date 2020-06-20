@@ -347,11 +347,7 @@ public class MtcnnUtil {
 		int stride = 2;
 		int cellSize = 12;
 
-		// imap = np.transpose(imap)
-		// y, x = np.where(imap >= t)
-		// imap = imap.transpose();
 		INDArray bb = MtcnnUtil.getIndexWhereMatrix(imap, v -> v >= stepThreshold);
-		//INDArray bb = MtcnnUtil.getIndexWhere3(imap, Conditions.greaterThanOrEqual(stepThreshold));
 
 		if (bb.isEmpty()) {
 			return new INDArray[] { Nd4j.empty(), Nd4j.empty() };
@@ -359,35 +355,20 @@ public class MtcnnUtil {
 
 		INDArray yx = bb.transpose();
 
-		// TODO : implement the following code fragment
-		//  if y.shape[0] == 1:
-		//    dx1 = np.flipud(dx1)
-		//    dy1 = np.flipud(dy1)
-		//    dx2 = np.flipud(dx2)
-		//    dy2 = np.flipud(dy2)
 		if (yx.size(0) == 1) {
 			throw new IllegalStateException("TODO");
 		}
 
-		//    q1 = np.fix((stride*bb+1)/scale)
-		//    q2 = np.fix((stride*bb+cellsize-1+1)/scale)
 		INDArray q1 = Transforms.floor(bb.mul(stride).add(1).div(scale));
 		INDArray q2 = Transforms.floor(bb.mul(stride).add(cellSize).div(scale));
 
-		//    dx1 = np.transpose(reg[:,:,0])
-		//    dy1 = np.transpose(reg[:,:,1])
-		//    dx2 = np.transpose(reg[:,:,2])
-		//    dy2 = np.transpose(reg[:,:,3])
 		INDArray dx1 = reg.get(all(), all(), point(0));
 		INDArray dy1 = reg.get(all(), all(), point(1));
 		INDArray dx2 = reg.get(all(), all(), point(2));
 		INDArray dy2 = reg.get(all(), all(), point(3));
 
-		// reg = np.transpose(np.vstack([ dx1[(y,x)], dy1[(y,x)], dx2[(y,x)], dy2[(y,x)] ]))
 		INDArray outReg = Nd4j.vstack(dx1.get(yx), dy1.get(yx), dx2.get(yx), dy2.get(yx)).transpose();
 
-		//  if reg.size == 0:
-		//    reg = np.empty(shape=(0, 3))
 		if (outReg.isEmpty()) {
 			outReg = Nd4j.empty();
 		}

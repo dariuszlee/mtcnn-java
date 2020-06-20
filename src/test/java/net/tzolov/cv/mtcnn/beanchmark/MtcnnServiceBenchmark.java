@@ -52,11 +52,11 @@ public class MtcnnServiceBenchmark {
 		public void setUp() throws IOException {
 			Nd4j.ENFORCE_NUMERICAL_STABILITY = false;
 
-			mtcnnService = new MtcnnService(30, 0.709, new double[] { 0.6, 0.7, 0.7 });
-
 			image = new Java2DNativeImageLoader().asMatrix(
 					new DefaultResourceLoader().getResource("classpath:/VikiMaxiAdi.jpg").getInputStream())
 					.get(point(0), all(), all(), all()).dup();
+			mtcnnService = new MtcnnService(30, 0.709, new double[] { 0.6, 0.7, 0.7 }, (int)image.size(2), (int)image.size(3));
+
 		}
 	}
 

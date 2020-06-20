@@ -7,7 +7,8 @@ import org.junit.Test;
 public class MxNetLoaderTest {
 	@Test
 	public void testSingeFace() throws IOException {
-        MxNetLoader mxNetLoader = new MxNetLoader(new int[]{0});    
+        String modelPath = "/home/dzly/projects/countr_face_recognition/mtcnn-java/src/main/resources/mxnet_model/det1";
+        MxNetLoader mxNetLoader = new MxNetLoader(new int[]{1, 3, 200, 200}, modelPath);    
         // mxNetLoader.Run();    
     }
 }
