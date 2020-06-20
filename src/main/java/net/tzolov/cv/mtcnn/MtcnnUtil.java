@@ -39,7 +39,6 @@ import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.SpecifiedIndex;
 import org.nd4j.linalg.ops.transforms.Transforms;
 import org.nd4j.linalg.util.ArrayUtil;
-import org.tensorflow.Tensor;
 
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -79,18 +78,10 @@ public class MtcnnUtil {
 
 	public static PadResult pad(INDArray totalBoxes, int w, int h) {
 
-		// compute the padding coordinates (pad the bounding boxes to square)
-		//        tmpw = (total_boxes[:, 2] - total_boxes[:, 0] + 1).astype(np.int32)
-		//        tmph = (total_boxes[:, 3] - total_boxes[:, 1] + 1).astype(np.int32)
-		//        numbox = total_boxes.shape[0]
 		INDArray tmpW = Transforms.floor(totalBoxes.get(all(), point(2)).sub(totalBoxes.get(all(), point(0))).add(1));
 		INDArray tmpH = Transforms.floor(totalBoxes.get(all(), point(3)).sub(totalBoxes.get(all(), point(1))).add(1));
 		long numBox = totalBoxes.shape()[0]; // == totalBoxes.size(0);
 
-		// dx = np.ones(numbox, dtype=np.int32)
-		// dy = np.ones(numbox, dtype=np.int32)
-		// edx = tmpw.copy().astype(np.int32)
-		//  edy = tmph.copy().astype(np.int32)
 		INDArray dx = Nd4j.ones(numBox);
 		INDArray dy = Nd4j.ones(numBox);
 		INDArray edx = tmpW;
@@ -483,26 +474,6 @@ public class MtcnnUtil {
 		else {
 			return Nd4j.concat(dimension, arr1, values);
 		}
-	}
-
-	/**
-	 * Converts ND4J array into a {@link Tensor}
-	 * @param indArray {@link INDArray} to covert
-	 * @return Returns Float {@link Tensor}
-	 */
-	public static Tensor<Float> toTensor(INDArray indArray) {
-		return Tensor.create(indArray.shape(), FloatBuffer.wrap(indArray.data().asFloat()));
-	}
-
-	/**
-	 * Converts a Tensorflow {@link Tensor} into an ND4J float array
-	 * @param tensor input tensor
-	 * @return Returns ND4J representation for the input tensor
-	 */
-	public static INDArray toNDArray(Tensor<?> tensor) {
-		FloatBuffer floatBuffer = FloatBuffer.allocate(tensor.numElements());
-		tensor.writeTo(floatBuffer);
-		return Nd4j.create(floatBuffer.array(), ArrayUtil.toInts(tensor.shape()), C_ORDERING);
 	}
 
 	/**

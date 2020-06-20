@@ -72,6 +72,7 @@ public class MtcnnService {
 
 	private final Java2DNativeImageLoader imageLoader;
 
+    private final MxNetLoader proposeNetGraphRunnerMxnet;
 	private final GraphRunner proposeNetGraphRunner;
 	private final GraphRunner refineNetGraphRunner;
 	private final GraphRunner outputNetGraphRunner;
@@ -96,6 +97,7 @@ public class MtcnnService {
 
 		this.imageLoader = new Java2DNativeImageLoader();
 
+        this.proposeNetGraphRunnerMxnet = this.createGraphRunnerMxnet("Nada");
 		this.proposeNetGraphRunner = this.createGraphRunner(TF_PNET_MODEL_URI, "pnet/input");
 		this.refineNetGraphRunner = this.createGraphRunner(TF_RNET_MODEL_URI, "rnet/input");
 		this.outputNetGraphRunner = this.createGraphRunner(TF_ONET_MODEL_URI, "onet/input");
@@ -105,6 +107,10 @@ public class MtcnnService {
 		//refineNetGraph = TFGraphMapper.getInstance().importGraph(new DefaultResourceLoader().getResource(TF_RNET_MODEL_URI).getInputStream());
 		//outputNetGraph = TFGraphMapper.getInstance().importGraph(new DefaultResourceLoader().getResource(TF_ONET_MODEL_URI).getInputStream());
 	}
+
+    private MxNetLoader createGraphRunnerMxnet(String mxnetModelUri){
+        return new MxNetLoader(new int[]{0});
+    }
 
 	private GraphRunner createGraphRunner(String tensorflowModelUri, String inputLabel) {
 		try {
@@ -234,6 +240,7 @@ public class MtcnnService {
 			int width = (int) image3HW.size(2);
 
 			List<Double> scales = MtcnnUtil.computeScalePyramid(height, width, this.minFaceSize, this.scaleFactor);
+            System.out.println("DARIUS ScALES: " + scales);
 
 			// Stage One
 			Object[] stageOneResult = this.preparationStage(image3HW, scales);
@@ -277,22 +284,10 @@ public class MtcnnService {
 			//image0WH3 = image0WH3.subi(127.5).muli(0.0078125);
 			image0WH3 = image0WH3.sub(127.5).mul(0.0078125);
 
-			// img_x = np.expand_dims(scaled_image, 0)
-			// img_y = np.transpose(img_x, (0, 2, 1, 3))
-
-			//this.proposeNetGraph.associateArrayWithVariable(image0WH3, this.proposeNetGraph.variableMap().get("pnet/input"));
-			//List<DifferentialFunction> proposeNetResults = this.proposeNetGraph.exec().getRight();
-			//INDArray out0 = proposeNetResults.stream().filter(df -> df.getOwnName().equalsIgnoreCase("pnet/conv4-2/BiasAdd"))
-			//		.findFirst().get().outputVariable().getArr(); //.permutei(0, 2, 1, 3);
-			//INDArray out1 = proposeNetResults.stream().filter(df -> df.getOwnName().equalsIgnoreCase("pnet/prob1"))
-			//		.findFirst().get().outputVariable().getArr(); //.permutei(0, 2, 1, 3);
-
 			Map<String, INDArray> resultMap = this.proposeNetGraphRunner.run(Collections.singletonMap("pnet/input", image0WH3));
 			INDArray out0 = resultMap.get("pnet/conv4-2/BiasAdd");//.permutei(0, 2, 1, 3);
 			INDArray out1 = resultMap.get("pnet/prob1");//.permutei(0, 2, 1, 3);
 
-			// boxes, _ = self.__generate_bounding_box(out1[0, :, :, 1].copy(),
-			//    out0[0, :, :, :].copy(), scale, self.__steps_threshold[0])
 			INDArray boxes = MtcnnUtil.generateBoundingBox(out1.get(point(0), all(), all(), point(1)),
 					out0.get(point(0), all(), all(), all()), scale, this.stepsThreshold[0])[0];
 
@@ -591,6 +586,22 @@ public class MtcnnService {
 		// Imgproc.resize(mat, mat, newSizeWH, 0, 0, Imgproc.CV_INTER_AREA);
 		//[0, W, H, 3]
 		return imageLoader.asMatrix(mat);
+	}
+
+	public INDArray resizeGlobal(INDArray imageCHW, opencv_core.Size newSizeWH) throws IOException {
+		// Assert.isTrue(imageCHW.size(0) == CHANNEL_COUNT, "Input image is expected to have the [3, W, H] dimensions");
+        
+
+		// Mat expects [C, H, W] dimensions
+        opencv_core.Mat mat = imageLoader.asMat(imageCHW);
+        opencv_imgproc.resize(mat, mat, newSizeWH, 0, 0, opencv_imgproc.CV_INTER_AREA);
+
+		// Mat mat = imageLoader.asMat(imageCHW);
+		// Imgproc.resize(mat, mat, newSizeWH, 0, 0, Imgproc.CV_INTER_AREA);
+		//[0, W, H, 3]
+		INDArray resized = imageLoader.asMatrix(mat);
+        System.out.println("DARIUS RESIZE " + resized.shapeInfoToString());
+        return resized;
 	}
 
 	public static void main(String[] args) throws IOException {
