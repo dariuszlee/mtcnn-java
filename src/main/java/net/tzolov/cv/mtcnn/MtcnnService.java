@@ -48,7 +48,7 @@ import org.springframework.util.Assert;
 
 /** @author Christian Tzolov */
 public class MtcnnService {
-  public static final String MXNET_MODEL_CLASSPATH = "/home/dzly/mtcnn-java/src/main/resources/mxnet_model/";
+  public static final String MXNET_MODEL_CLASSPATH = "/home/dzly/projects/countr_face_recognition/mtcnn-java/src/main/resources/mxnet_model/";
   public final String MXNET_MODEL_FOLDER;
 
   private final Java2DNativeImageLoader imageLoader;
@@ -73,11 +73,6 @@ public class MtcnnService {
 
     this.imageLoader = new Java2DNativeImageLoader();
 
-    // this.proposeNetGraphRunner = this.createGraphRunner(TF_PNET_MODEL_URI, "pnet/input");
-    // this.refineNetGraphRunner = this.createGraphRunner(TF_RNET_MODEL_URI, "rnet/input");
-    // this.outputNetGraphRunner = this.createGraphRunner(TF_ONET_MODEL_URI, "onet/input");
-
-    // End of old constructor
     this.imageWidth = imageWidth;
     this.imageHeight = imageHeight;
     this.scales =
@@ -110,21 +105,6 @@ public class MtcnnService {
     return new MxNetLoader(sizes, mxnetModelUri);
   }
 
-  // private GraphRunner createGraphRunner(String tensorflowModelUri, String inputLabel) {
-  //   try {
-  //     return new GraphRunner(
-  //         IOUtils.toByteArray(
-  //             new DefaultResourceLoader().getResource(tensorflowModelUri).getInputStream()),
-  //         Arrays.asList(inputLabel));
-  //     // ConfigProto.getDefaultInstance());
-  //   } catch (IOException e) {
-  //     throw new IllegalStateException(
-  //         String.format(
-  //             "Failed to load TF model [%s] and input [%s]:", tensorflowModelUri, inputLabel),
-  //         e);
-  //   }
-  // }
-
   /**
    * Detects faces in an image, and returns bounding boxes and points for them.
    *
@@ -146,7 +126,6 @@ public class MtcnnService {
   public FaceAnnotation[] faceDetection(BufferedImage bImage) throws IOException {
     INDArray ndImage3HW =
         this.imageLoader.asMatrix(bImage).get(point(0), interval(0, 3), all(), all());
-    // INDArray ndImage3HW = this.imageLoader.asMatrix(bImage).get(point(0), all(), all(), all());
     return faceDetection(ndImage3HW);
   }
 
@@ -457,18 +436,27 @@ public class MtcnnService {
         MtcnnUtil.pad(totalBoxes, (int) image.shape()[1], (int) image.shape()[0]);
 
     INDArray tempImg1 = computeTempImage(image, numBoxes, padResult, 48);
-    INDArray outputTemp = tempImg1.permute(0, 3, 2, 1);
+    INDArray outputTemp = (this.imageWidth > this.imageHeight)
+      ? tempImg1.permute(0, 3, 1, 2)
+      : tempImg1.permute(0, 3, 2, 1);
+    // INDArray outputTemp =  tempImg1.permute(0, 3, 2, 1);
 
     List<INDArray> resultList = outputNetGraphRunnerMxnet.runOutput(outputTemp);
+    System.out.println("DARIUS out0 " + resultList.get(0));
+    System.out.println("DARIUS out1 " + resultList.get(1));
+    System.out.println("DARIUS out2 " + resultList.get(2));
     INDArray out0 = resultList.get(1);
     INDArray out1 = resultList.get(0);
     INDArray out2 = resultList.get(2);
 
     INDArray score = out2.get(all(), point(1)).transposei();
+    System.out.println("DARIUS score " + score);
 
     INDArray points = out1;
 
     INDArray ipass = MtcnnUtil.getIndexWhereVector(score.transpose(), s -> s > stepsThreshold[2]);
+    
+    System.out.println("DARIUS ipass " + ipass);
 
     if (ipass.isEmpty()) {
       return new INDArray[] {Nd4j.empty(), Nd4j.empty()};

@@ -52,16 +52,16 @@
 	</properties>
 
 	<dependencies>
-        <dependency> 
-            <groupId>org.apache.mxnet</groupId> 
-            <artifactId>mxnet-full_2.11</artifactId> 
-            <version>INTERNAL</version> 
-        </dependency>
         <!-- <dependency> --> 
         <!--     <groupId>org.apache.mxnet</groupId> --> 
-        <!--     <artifactId>mxnet-full_2.11-linux-x86_64-cpu</artifactId> --> 
-        <!--     <version>1.5.1</version> --> 
+        <!--     <artifactId>mxnet-full_2.11</artifactId> --> 
+        <!--     <version>INTERNAL</version> --> 
         <!-- </dependency> -->
+        <dependency> 
+            <groupId>org.apache.mxnet</groupId> 
+            <artifactId>mxnet-full_2.11-linux-x86_64-cpu</artifactId> 
+            <version>1.5.1</version> 
+        </dependency>
 		<!-- for ND4J RELEASE only -->
 		<dependency>
 			<groupId>org.nd4j</groupId>
