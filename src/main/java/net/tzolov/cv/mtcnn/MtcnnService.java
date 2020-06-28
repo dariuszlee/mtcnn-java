@@ -43,17 +43,12 @@ import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.SpecifiedIndex;
 import org.nd4j.linalg.ops.transforms.Transforms;
-import org.nd4j.tensorflow.conversion.graphrunner.GraphRunner;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.util.Assert;
 
 /** @author Christian Tzolov */
 public class MtcnnService {
-  public static final String TF_PNET_MODEL_URI = "classpath:/model2/pnet_graph.proto";
-  public static final String TF_RNET_MODEL_URI = "classpath:/model2/rnet_graph.proto";
-  public static final String TF_ONET_MODEL_URI = "classpath:/model2/onet_graph.proto";
-
-  public static final String MXNET_MODEL_CLASSPATH = "classpath:/mxnet_model";
+  public static final String MXNET_MODEL_CLASSPATH = "/home/dzly/mtcnn-java/src/main/resources/mxnet_model/";
   public final String MXNET_MODEL_FOLDER;
 
   private final Java2DNativeImageLoader imageLoader;
@@ -61,10 +56,6 @@ public class MtcnnService {
   private final Map<Double, MxNetLoader> proposeNetGraphRunnerMxnet;
   private final MxNetLoader refineNetGraphRunnerMxnet;
   private final MxNetLoader outputNetGraphRunnerMxnet;
-  private final GraphRunner proposeNetGraphRunner;
-  private final GraphRunner refineNetGraphRunner;
-  private final GraphRunner outputNetGraphRunner;
-
 
   private final int minFaceSize;
   private final double scaleFactor;
@@ -82,9 +73,9 @@ public class MtcnnService {
 
     this.imageLoader = new Java2DNativeImageLoader();
 
-    this.proposeNetGraphRunner = this.createGraphRunner(TF_PNET_MODEL_URI, "pnet/input");
-    this.refineNetGraphRunner = this.createGraphRunner(TF_RNET_MODEL_URI, "rnet/input");
-    this.outputNetGraphRunner = this.createGraphRunner(TF_ONET_MODEL_URI, "onet/input");
+    // this.proposeNetGraphRunner = this.createGraphRunner(TF_PNET_MODEL_URI, "pnet/input");
+    // this.refineNetGraphRunner = this.createGraphRunner(TF_RNET_MODEL_URI, "rnet/input");
+    // this.outputNetGraphRunner = this.createGraphRunner(TF_ONET_MODEL_URI, "onet/input");
 
     // End of old constructor
     this.imageWidth = imageWidth;
@@ -93,8 +84,7 @@ public class MtcnnService {
         MtcnnUtil.computeScalePyramid(
             this.imageHeight, this.imageWidth, this.minFaceSize, this.scaleFactor);
 
-    this.MXNET_MODEL_FOLDER =
-        new DefaultResourceLoader().getResource(MXNET_MODEL_CLASSPATH).getFile().getAbsolutePath();
+    this.MXNET_MODEL_FOLDER = MXNET_MODEL_CLASSPATH;
 
     String MXNET_PNET_MODEL_URI = MXNET_MODEL_FOLDER + "/det1";
     String MXNET_RNET_MODEL_URI = MXNET_MODEL_FOLDER + "/det2";
@@ -120,20 +110,20 @@ public class MtcnnService {
     return new MxNetLoader(sizes, mxnetModelUri);
   }
 
-  private GraphRunner createGraphRunner(String tensorflowModelUri, String inputLabel) {
-    try {
-      return new GraphRunner(
-          IOUtils.toByteArray(
-              new DefaultResourceLoader().getResource(tensorflowModelUri).getInputStream()),
-          Arrays.asList(inputLabel));
-      // ConfigProto.getDefaultInstance());
-    } catch (IOException e) {
-      throw new IllegalStateException(
-          String.format(
-              "Failed to load TF model [%s] and input [%s]:", tensorflowModelUri, inputLabel),
-          e);
-    }
-  }
+  // private GraphRunner createGraphRunner(String tensorflowModelUri, String inputLabel) {
+  //   try {
+  //     return new GraphRunner(
+  //         IOUtils.toByteArray(
+  //             new DefaultResourceLoader().getResource(tensorflowModelUri).getInputStream()),
+  //         Arrays.asList(inputLabel));
+  //     // ConfigProto.getDefaultInstance());
+  //   } catch (IOException e) {
+  //     throw new IllegalStateException(
+  //         String.format(
+  //             "Failed to load TF model [%s] and input [%s]:", tensorflowModelUri, inputLabel),
+  //         e);
+  //   }
+  // }
 
   /**
    * Detects faces in an image, and returns bounding boxes and points for them.
@@ -467,7 +457,6 @@ public class MtcnnService {
         MtcnnUtil.pad(totalBoxes, (int) image.shape()[1], (int) image.shape()[0]);
 
     INDArray tempImg1 = computeTempImage(image, numBoxes, padResult, 48);
-    System.out.println("Temp img1" + tempImg1.shapeInfoToString());
     INDArray outputTemp = tempImg1.permute(0, 3, 2, 1);
 
     List<INDArray> resultList = outputNetGraphRunnerMxnet.runOutput(outputTemp);
@@ -475,23 +464,11 @@ public class MtcnnService {
     INDArray out1 = resultList.get(0);
     INDArray out2 = resultList.get(2);
 
-    Map<String, INDArray> resultMap =
-        this.outputNetGraphRunner.run(Collections.singletonMap("onet/input", tempImg1));
-
-    // INDArray out0 = resultMap.get("onet/conv6-2/conv6-2");
-    // INDArray out1 = resultMap.get("onet/conv6-3/conv6-3");
-    // INDArray out2 = resultMap.get("onet/prob1");
-    System.out.println("SHAPE0: "+ out0.shapeInfoToString());
-    System.out.println("SHAPE1: "+ out1.shapeInfoToString());
-    System.out.println("SHAPE2: "+ out2.shapeInfoToString());
-
     INDArray score = out2.get(all(), point(1)).transposei();
-    System.out.println("SCORES: " + score);
 
     INDArray points = out1;
 
     INDArray ipass = MtcnnUtil.getIndexWhereVector(score.transpose(), s -> s > stepsThreshold[2]);
-    System.out.println("IPASS: " + ipass);
 
     if (ipass.isEmpty()) {
       return new INDArray[] {Nd4j.empty(), Nd4j.empty()};
@@ -505,7 +482,6 @@ public class MtcnnService {
             ? score.get(ipass).reshape(1, 1).dup()
             : Nd4j.expandDims(score.get(ipass).dup(), 1);
     totalBoxes = Nd4j.hstack(b1, b2);
-    System.out.println("TOTAL BOXES " + totalBoxes);
 
     INDArray mv = out0.get(new SpecifiedIndex(ipass.toLongVector()), all()).transposei();
 

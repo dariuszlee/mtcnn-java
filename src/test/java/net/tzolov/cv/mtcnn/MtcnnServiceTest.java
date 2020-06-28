@@ -71,13 +71,11 @@ public class MtcnnServiceTest {
       BufferedImage annotatedImage = MtcnnUtil.drawFaceAnnotations(inputImage, faceAnnotations);
       // 4. Store face-annotated image
       ImageIO.write(annotatedImage, "png", new File("./AnnotatedImage.png"));
-      String shouldEqual = "[{\"bbox\":{\"x\":75,\"y\":65,\"w\":96,\"h\":123},\"confidence\":0.9999769926071167,\"land"
-           + "marks\":[{\"type\":\"LEFT_EYE\",\"position\":{\"x\":103,\"y\":113}},{\"type\":\"RIGHT_EYE\",\"position\":"
-           + "{\"x\":149,\"y\":114}},{\"type\":\"NOSE\",\"position\":{\"x\":125,\"y\":136}},{\"type\":\"MOUTH_LEFT\",\""
-           + "position\":{\"x\":106,\"y\":160}},{\"type\":\"MOUTH_RIGHT\",\"position\":{\"x\":146,\"y\":160}}]}]";
+      String shouldEquals = "[{\"bbox\":{\"x\":71,\"y\":54,\"w\":100,\"h\":135},\"confidence\":0.9999998807907104,\"landmarks\":[{\"type\":\"LEFT_EYE\",\"position\":{\"x\":102,\"y\":112}},{\"type\":\"RIGHT_EYE\",\"position\":{\"x\":149,\"y\":111}},{\"type\":\"NOSE\",\"position\":{\"x\":127,\"y\":138}},{\"type\":\"MOUTH_LEFT\",\"position\":{\"x\":106,\"y\":161}},{\"type\":\"MOUTH_RIGHT\",\"position\":{\"x\":147,\"y\":159}}]}]";
       assertThat(
           toJson(faceAnnotations),
-          equalTo(shouldEqual));
+          equalTo(shouldEquals));
+      System.out.println("DARIUS: success");
     }
   }
 
@@ -95,6 +93,7 @@ public class MtcnnServiceTest {
               inputImage.getHeight());
       FaceAnnotation[] faceAnnotations = mtcnnService.faceDetection(inputImage);
       assertThat(toJson(faceAnnotations), equalTo("[]"));
+      System.out.println("DARIUS: success");
     }
   }
 
@@ -111,17 +110,13 @@ public class MtcnnServiceTest {
               inputImage.getWidth(),
               inputImage.getHeight());
       FaceAnnotation[] faceAnnotations = mtcnnService.faceDetection(inputImage);
-      String shouldEqual = "[{\"bbox\":{\"x\":331,\"y\":94,\"w\":58,\"h\":70},\"confidence\":0.9999604225158691,\"land"
- + "marks\":[{\"type\":\"LEFT_EYE\",\"position\":{\"x\":346,\"y\":121}},{\"type\":\"RIGHT_EYE\",\"position\":"
- + "{\"x\":373,\"y\":120}},{\"type\":\"NOSE\",\"position\":{\"x\":358,\"y\":135}},{\"type\":\"MOUTH_LEFT\",\""
- + "position\":{\"x\":347,\"y\":147}},{\"type\":\"MOUTH_RIGHT\",\"position\":{\"x\":370,\"y\":147}}]},{\"bbox"
- + "\":{\"x\":102,\"y\":157,\"w\":69,\"h\":83},\"confidence\":0.9997490048408508,\"landmarks\":[{\"type\":\"L"
- + "EFT_EYE\",\"position\":{\"x\":121,\"y\":189}},{\"type\":\"RIGHT_EYE\",\"position\":{\"x\":153,\"y\":189}}"
- + ",{\"type\":\"NOSE\",\"position\":{\"x\":135,\"y\":204}},{\"type\":\"MOUTH_LEFT\",\"position\":{\"x\":122,"
- + "\"y\":218}},{\"type\":\"MOUTH_RIGHT\",\"position\":{\"x\":149,\"y\":220}}]}]";
+      String shouldEquals = "[{\"bbox\":{\"x\":103,\"y\":158,\"w\":67,\"h\":81},\"confidence\":0.9999957084655762,\"landmarks\":[{\"type\":\"LEFT_EYE\",\"position\":{\"x\":120,\"y\":188}},{\"type\":\"RIGHT_EYE\",\"position\":{\"x\":153,\"y\":190}},{\"type\":\"NOSE\",\"position\":{\"x\":135,\"y\":204}},{\"type\":\"MOUTH_LEFT\",\"position\":{\"x\":120,\"y\":219}},{\"type\":\"MOUTH_RIGHT\",\"position\":{\"x\":148,\"y\":221}}]},{\"bbox\":{\"x\":329,\"y\":86,\"w\":62,\"h\":80},\"confidence\":0.9993091821670532,\"landmarks\":[{\"type\":\"LEFT_EYE\",\"position\":{\"x\":345,\"y\":119}},{\"type\":\"RIGHT_EYE\",\"position\":{\"x\":373,\"y\":119}},{\"type\":\"NOSE\",\"position\":{\"x\":357,\"y\":133}},{\"type\":\"MOUTH_LEFT\",\"position\":{\"x\":346,\"y\":150}},{\"type\":\"MOUTH_RIGHT\",\"position\":{\"x\":370,\"y\":150}}]},{\"bbox\":{\"x\":336,\"y\":58,\"w\":57,\"h\":66},\"confidence\":0.09178774058818817,\"landmarks\":[{\"type\":\"LEFT_EYE\",\"position\":{\"x\":359,\"y\":76}},{\"type\":\"RIGHT_EYE\",\"position\":{\"x\":374,\"y\":79}},{\"type\":\"NOSE\",\"position\":{\"x\":362,\"y\":79}},{\"type\":\"MOUTH_LEFT\",\"position\":{\"x\":353,\"y\":92}},{\"type\":\"MOUTH_RIGHT\",\"position\":{\"x\":368,\"y\":94}}]}]";
+
+
       assertThat(
           toJson(faceAnnotations),
-          equalTo(shouldEqual));
+          equalTo(shouldEquals));
+      System.out.println("DARIUS: success");
 
     }
   }

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
@@ -53,9 +54,14 @@
 	<dependencies>
         <dependency> 
             <groupId>org.apache.mxnet</groupId> 
-            <artifactId>mxnet-full_2.11-linux-x86_64-cpu</artifactId> 
-            <version>1.5.1</version> 
+            <artifactId>mxnet-full_2.11</artifactId> 
+            <version>INTERNAL</version> 
         </dependency>
+        <!-- <dependency> --> 
+        <!--     <groupId>org.apache.mxnet</groupId> --> 
+        <!--     <artifactId>mxnet-full_2.11-linux-x86_64-cpu</artifactId> --> 
+        <!--     <version>1.5.1</version> --> 
+        <!-- </dependency> -->
 		<!-- for ND4J RELEASE only -->
 		<dependency>
 			<groupId>org.nd4j</groupId>
@@ -66,19 +72,7 @@
 			<groupId>org.nd4j</groupId>
 			<artifactId>nd4j-native</artifactId>
 			<version>${nd4j.version}</version>
-			<classifier>linux-x86_64-avx2</classifier>
-		</dependency>
-		<dependency>
-			<groupId>org.nd4j</groupId>
-			<artifactId>nd4j-native</artifactId>
-			<version>${nd4j.version}</version>
-			<classifier>macosx-x86_64-avx2</classifier>
-		</dependency>
-		<dependency>
-			<groupId>org.nd4j</groupId>
-			<artifactId>nd4j-native</artifactId>
-			<version>${nd4j.version}</version>
-			<classifier>windows-x86_64-avx2</classifier>
+            <classifier>linux-x86_64</classifier>
 		</dependency>
 		<!-- for ND4J RELEASE only -->
 
@@ -104,17 +98,6 @@
 			<artifactId>jackson-databind</artifactId>
 			<version>${jackson.version}</version>
 		</dependency>
-        <!-- Tensorflow -->
-        <dependency>
-            <groupId>org.nd4j</groupId>
-            <artifactId>nd4j-tensorflow</artifactId>
-            <version>${nd4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.bytedeco.javacpp-presets</groupId>
-            <artifactId>tensorflow-platform</artifactId>
-            <version>1.9.0-1.4.2</version>
-        </dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-core</artifactId>
