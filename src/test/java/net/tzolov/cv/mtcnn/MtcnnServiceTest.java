@@ -75,7 +75,6 @@ public class MtcnnServiceTest {
       assertThat(
           toJson(faceAnnotations),
           equalTo(shouldEquals));
-      System.out.println("DARIUS: success");
     }
   }
 
@@ -93,7 +92,6 @@ public class MtcnnServiceTest {
               inputImage.getHeight());
       FaceAnnotation[] faceAnnotations = mtcnnService.faceDetection(inputImage);
       assertThat(toJson(faceAnnotations), equalTo("[]"));
-      System.out.println("DARIUS: success");
     }
   }
 
@@ -116,7 +114,6 @@ public class MtcnnServiceTest {
       assertThat(
           toJson(faceAnnotations),
           equalTo(shouldEquals));
-      System.out.println("DARIUS: success");
 
     }
   }

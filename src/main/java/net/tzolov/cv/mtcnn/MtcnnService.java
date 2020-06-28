@@ -292,7 +292,6 @@ public class MtcnnService {
       // Map<String, INDArray> resultMap =
       //     this.proposeNetGraphRunner.run(Collections.singletonMap("pnet/input", image0WH3));
       // INDArray out0_n = resultMap.get("pnet/conv4-2/BiasAdd");
-      // System.out.println("DARIUS SHAPE0a " + out0_n.shapeInfoToString());
       // INDArray out1_n = resultMap.get("pnet/prob1");
 
       INDArray boxes =
@@ -442,22 +441,16 @@ public class MtcnnService {
     // INDArray outputTemp =  tempImg1.permute(0, 3, 2, 1);
 
     List<INDArray> resultList = outputNetGraphRunnerMxnet.runOutput(outputTemp);
-    System.out.println("DARIUS out0 " + resultList.get(0));
-    System.out.println("DARIUS out1 " + resultList.get(1));
-    System.out.println("DARIUS out2 " + resultList.get(2));
     INDArray out0 = resultList.get(1);
     INDArray out1 = resultList.get(0);
     INDArray out2 = resultList.get(2);
 
     INDArray score = out2.get(all(), point(1)).transposei();
-    System.out.println("DARIUS score " + score);
 
     INDArray points = out1;
 
     INDArray ipass = MtcnnUtil.getIndexWhereVector(score.transpose(), s -> s > stepsThreshold[2]);
     
-    System.out.println("DARIUS ipass " + ipass);
-
     if (ipass.isEmpty()) {
       return new INDArray[] {Nd4j.empty(), Nd4j.empty()};
     }
